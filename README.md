@@ -5,73 +5,127 @@ A full-stack web application with AI integration that processes book data and en
 ## Features
 - **Backend**: Django REST Framework + SQLite + ChromaDB (Vector DB)
 - **Frontend**: Vite + React + Tailwind CSS
-- **Automation**: Selenium scraper to collect book metadata
-- **AI Integration**: LangChain + Local HuggingFace Embeddings + OpenAI/LMStudio for LLM interactions (Insights, RAG)
+- **Automation**: Data ingestion capabilities to fetch and parse external book data.
+- **AI Integration**: LangChain + Local HuggingFace Embeddings + OpenAI/Local LLM for RAG Insights and semantic recommendations.
+
+## Screenshots
+
+Here are some glimpses of the Book Intelligence application's user interface:
+
+### 1. Library Dashboard
+![Dashboard Interface](frontend/public/assets/dashboard.png)
+*The main view displaying all books in the corpus with their associated AI generated insights and attributes.*
+
+### 2. AI Question & Answer
+![Q&A Interface](frontend/public/assets/qa_tab.png)
+*The dedicated Q&A portal allowing users to query their database utilizing a Retrieval Augmented Generation pipeline.*
+
+### 3. RAG Query Execution
+![Answering Query](frontend/public/assets/qa_answering.png)
+*System pulling contextual passages and passing to an LLM to recommend specifically tailored insights based on your query.*
+
+*(Note: Please manually run `frontend/take_screenshots` or hit `Win+Shift+S` and save your screenshots into `frontend/public/assets/` to populate these!)*
 
 ## Setup Instructions
 
-### 1. Backend Setup
+### 1. Backend Setup (Local Development)
 1. Open a terminal in the `backend` directory.
-2. Ensure you have a virtual environment. If not, create and activate one: `python -m venv venv` and `.\venv\Scripts\activate`.
+2. Initialize your Python virtual environment: 
+   - Windows: `python -m venv venv` and `.\venv\Scripts\activate`
+   - Mac/Linux: `python3 -m venv venv` and `source venv/bin/activate`
 3. Install dependencies: `pip install -r requirements.txt`.
-4. Add environment variables if you want to use OpenAI or Anthropic, otherwise, we default to local LM Studio endpoint at `http://localhost:1234/v1`. Create a `.env` file in the backend root:
+4. Configure your Environment Variables: Create a `.env` file in the backend root directory.
    ```env
+   # API KEY routing. Leave blank if using a local LM-Studio instance.
    OPENAI_API_KEY=your_key_here
-   # Or for LM studio, keep it as 'lm-studio' and make sure LM studio is running a local server
    LLM_URL=http://localhost:1234/v1
+   DEBUG=True
+   ALLOWED_HOSTS=*
    ```
-5. Run migrations: `python manage.py migrate`.
-6. Start the backend: `python manage.py runserver`.
+5. Run database migrations: `python manage.py migrate`.
+6. Start the Django backend server: `python manage.py runserver`.
 
-### 2. Frontend Setup
+### 2. Frontend Setup (Local Development)
 1. Open a terminal in the `frontend` directory.
-2. Install dependencies: `npm install`.
-3. Start the dev server: `npm run dev`.
+2. Install NodeJS dependencies: `npm install`.
+3. Start the Vite development server: `npm run dev`.
+4. Your application will be live at `http://localhost:5173`.
 
-### 3. Run Automation (Scraper)
-1. Ensure the backend is running.
-2. Open a terminal in the project root.
-3. Run the Selenium scraper: `python scraper/scrape.py`.
-4. This will navigate to a sample bookstore, extract details, and post them to the backend API, triggering vector database ingestion and AI Insight generation.
+### 3. Deployment
+Refer to `deployment_guide.md` for specific instructions on pushing the frontend to **Vercel** and the backend to **Render**, mapping environment variables securely, and using `gunicorn`.
+
+## Dependencies (`requirements.txt`)
+All necessary backend packages are recorded in `backend/requirements.txt`:
+```txt
+django
+djangorestframework
+django-cors-headers
+selenium
+beautifulsoup4
+chromadb
+sentence-transformers
+requests
+openai
+mysqlclient
+gunicorn
+whitenoise
+python-dotenv
+```
 
 ## API Documentation
 
-### GET /api/books/
-Returns a list of all ingested books along with their generated AI insights.
+### 1. Retrieve Library
+- **Endpoint**: `GET /api/books/`
+- **Description**: Returns a paginated list of all ingested books along with their generated AI insights, context summaries, and sentiments.
 
-### POST /api/books/upload/
-Expects a JSON payload:
-```json
-{
-  "title": "Book Title",
-  "author": "Author Name",
-  "description": "Book Description...",
-  "url": "https://...",
-  "rating": 4.5
-}
-```
-**Side effects**: Automatically generates a 2-3 sentence summary, genre, and sentiment analysis via the LLM. Also chunks the text and embeds it into ChromaDB.
+### 2. Ingest New Document / Book
+- **Endpoint**: `POST /api/books/upload/`
+- **Description**: Ingests new books into the ChromaDB vector database while predicting genre/sentiment using the LLM.
+- **Payload Example**:
+  ```json
+  {
+    "title": "Dune",
+    "author": "Frank Herbert",
+    "description": "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides...",
+    "url": "https://example.com/dune",
+    "rating": 4.8
+  }
+  ```
 
-### POST /api/books/ask/
-Expects a JSON payload:
-```json
-{
-  "query": "Are there any books about artificial intelligence?"
-}
+### 3. Ask RAG Query
+- **Endpoint**: `POST /api/books/ask/`
+- **Description**: Embeds the user query, compares distance against `ChromaDB`, and forwards matched chunks to an LLM instruction prompt to answer questions.
+- **Payload Example**:
+  ```json
+  {
+    "query": "Are there any books about ecology and desert planets?"
+  }
+  ```
+
+## Testing Samples
+
+You can test the RAG flow instantly by running these `curl` commands (ensure your backend is live at 127.0.0.1:8000):
+
+**Test 1: Check if the AI generates valid structured insights when adding a book:**
+```bash
+curl -X POST http://127.0.0.1:8000/api/books/upload/ \
+     -H "Content-Type: application/json" \
+     -d '{"title": "The Martian", "author": "Andy Weir", "description": "Six days ago, astronaut Mark Watney became one of the first people to walk on Mars. Now, he's sure he'll be the first person to die there."}'
 ```
-**Response**:
-```json
-{
-  "answer": "Yes, based on the corpus, there is a book...",
-  "sources": [{"title": "Book Title", "book_id": 1}]
-}
+*Expected Result:* The book is added, pushed to ChromaDB, and a JSON object containing tone (`tense`) and genre (`scifi`) is generated.
+
+**Test 2: Retrieving an answer via the RAG API:**
+```bash
+curl -X POST http://127.0.0.1:8000/api/books/ask/ \
+     -H "Content-Type: application/json" \
+     -d '{"query": "Is there a book about an astronaut stranded on Mars?"}'
 ```
+*Expected Result:* Contextual retrieval matches "The Martian" chunk, answering the user question while appending `sources: ["The Martian"]`.
 
 ## Sample Questions & Answers
-* **Q**: What are some science fiction books?
-* **A**: Based on the context, "Light in the Dark" is a science fiction book...
-* **Q**: Tell me about a book with a dark tone.
-* **A**: The book "The Midnight Shadow" has a dark and thrilling tone...
+Here are some sample AI resolutions achievable when testing:
 
-## Screenshots
-[Include screenshots of the UI here - Dashboard, Q&A Interface, Details page]
+* **Q**: What are some science fiction books?
+* **A**: Based on our library context, "The Martian" by Andy Weir is a science fiction book following an astronaut. Additionally, "Dune" by Frank Herbert focuses on sci-fi themes of space exploration and politics!
+* **Q**: Tell me about a book with a dark tone.
+* **A**: The book "The Midnight Shadow" has a consistently dark and thrilling tone as established in the AI insights. Would you like a more detailed summary?
