@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-fade-in: fadeIn 0.5s both;
+  --animate-slide-in-bottom-4: slideInFromBottom4 0.5s both;
+  --animate-slide-in-bottom-8: slideInFromBottom8 0.5s both;
+  --animate-zoom-in-95: zoomIn95 0.5s both;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideInFromBottom4 {
+    from { transform: translateY(1rem); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes slideInFromBottom8 {
+    from { transform: translateY(2rem); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes zoomIn95 {
+    from { transform: scale(0.95); }
+    to { transform: scale(1); }
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+.fade-in {
+  animation-name: fadeIn;
+}
+.slide-in-from-bottom-4 {
+  animation-name: slideInFromBottom4;
+}
+.slide-in-from-bottom-8 {
+  animation-name: slideInFromBottom8;
+}
+.zoom-in-95 {
+  animation-name: zoomIn95;
+}

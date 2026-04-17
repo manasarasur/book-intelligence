@@ -1,0 +1,10 @@
+django
+djangorestframework
+django-cors-headers
+selenium
+beautifulsoup4
+chromadb
+sentence-transformers
+requests
+openai
+mysqlclient
