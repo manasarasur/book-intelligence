@@ -125,7 +125,7 @@ curl -X POST http://127.0.0.1:8000/api/books/ask/ \
 ## Sample Questions & Answers
 Here are some sample AI resolutions achievable when testing:
 
-* **Q**: What are some science fiction books?
-* **A**: Based on our library context, "The Martian" by Andy Weir is a science fiction book following an astronaut. Additionally, "Dune" by Frank Herbert focuses on sci-fi themes of space exploration and politics!
-* **Q**: Tell me about a book with a dark tone.
-* **A**: The book "The Midnight Shadow" has a consistently dark and thrilling tone as established in the AI insights. Would you like a more detailed summary?
+* **Q**: What are some adventure books?
+* **A**: Based on our library context, "A History of Adventure" by  H. Rider Haggard is a science fiction book . Additionally, "Alice's Adventures in Wonderland" by Lewis Carroll focuses on sci-fi themes.
+* **Q**: Tell me some harry potter books.
+* **A**: The book "Harry Potter and the Philosopher's Stonew" is a harry potter book.
